@@ -292,25 +292,40 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, bot: Bot):
             await session.commit()
         
         try:
+            await bot.send_message(
+                employee_telegram_id,
+                f"🔔 <b>Новый заказ #{order_id}!</b>\n\n"
+                f"👤 <b>Клиент:</b> {client_name}\n"
+                f"📞 <b>Телефон клиента:</b> {client_phone}\n"
+                f"📝 <b>Задача:</b> {description}\n"
+                f"💰 <b>Бюджет:</b> {price} USD\n\n"
+                f"Перейдите в раздел <b>📋 Мои заказы</b> для принятия решения.",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"⚠️ Не удалось отправить уведомление исполнителю {employee_telegram_id}: {e}")
+        
+        try:
             await callback.message.edit_text(
-                f"✅ <b>Заказ создан!</b>\n\n"
+                f"✅ <b>Заказ #{order_id} создан!</b>\n\n"
                 f"Ваш заказ отправлен исполнителю {employee_name}.\n"
                 f"Ожидайте подтверждения.",
                 parse_mode="HTML"
             )
         except Exception:
             await callback.message.answer(
-                f"✅ <b>Заказ создан!</b>\n\n"
+                f"✅ <b>Заказ #{order_id} создан!</b>\n\n"
                 f"Ваш заказ отправлен исполнителю {employee_name}.\n"
                 f"Ожидайте подтверждения.",
                 parse_mode="HTML"
             )
         
         await state.clear()
+        
     except Exception as e:
         await callback.message.answer(f"Произошла ошибка при создании заказа. Попробуйте позже.")
         await state.clear()
-        print(f"Ошибка в confirm_order: {e}")
+        print(f"❌ Ошибка в confirm_order: {e}")
 
 
 @client_handlers_router.callback_query(F.data == "order_cancel")
