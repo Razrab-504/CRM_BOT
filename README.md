@@ -2,6 +2,12 @@
 
 Полнофункциональная CRM-система для управления заказами между клиентами и исполнителями в Telegram.
 
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
+![Aiogram](https://img.shields.io/badge/Aiogram-3.x-green.svg)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.x-red.svg)
+![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 ## 📋 Описание
 
 Telegram-бот для автоматизации бизнес-процессов: поиск исполнителей, создание заказов, система рейтингов и отзывов. Подходит для фриланс-платформ, сервисных центров, маркетплейсов услуг.
@@ -82,54 +88,57 @@ DB_NAME=crm_bot
 
 6. **Примените миграции**
 ```bash
-python -m alembic upgrade head
+python src/create_database.py
 ```
 
 7. **Запустите бота**
 ```bash
-python bot.py
+python main.py
 ```
 
 ## 📁 Структура проекта
 
 ```
-telegram-crm-bot/
-├── bot.py                 # Точка входа
-├── config.py              # Конфигурация
-├── requirements.txt       # Зависимости
-├── .env.example          # Пример переменных окружения
-├── README.md             # Документация
+CRM_BOT/
+├── main.py                    # Точка входа
+├── config.py                  # Конфигурация
+├── requirements.txt           # Зависимости
+├── .env                       # Переменные окружения
+├── README.md                  # Документация
+├── .gitignore                # Git ignore файл
 │
-├── handlers/             # Обработчики команд
-│   ├── __init__.py
-│   ├── start.py         # Команда /start
-│   ├── registration.py  # FSM регистрации
-│   ├── client.py        # Логика клиента
-│   ├── employee.py      # Логика исполнителя
-│   └── orders.py        # Управление заказами
+├── src/
+│   ├── bot/
+│   │   ├── handlers/         # Обработчики команд
+│   │   │   └── user/
+│   │   │       └── user_handlres.py  # Логика пользователя
+│   │   │
+│   │   └── kbd/              # Клавиатуры
+│   │       ├── admin_keyboard.py     # Админ кнопки
+│   │       └── user_keyboard.py      # Пользовательские кнопки
+│   │
+│   ├── db/
+│   │   ├── crud/             # CRUD операции
+│   │   │   ├── __init__.py
+│   │   │   ├── client.py    # Операции с клиентами
+│   │   │   ├── employee.py  # Операции с исполнителями
+│   │   │   ├── order.py     # Операции с заказами
+│   │   │   └── review.py    # Операции с отзывами
+│   │   │
+│   │   └── models/           # SQLAlchemy модели
+│   │       ├── __init__.py
+│   │       ├── client.py    # Модель клиента
+│   │       ├── employee.py  # Модель исполнителя
+│   │       ├── order.py     # Модель заказа
+│   │       └── review.py    # Модель отзыва
+│   │
+│   ├── base.py               # Base для моделей
+│   ├── config.py             # Конфигурация проекта
+│   ├── create_database.py    # Создание БД
+│   ├── enums.py              # Enum классы (статусы, категории)
+│   └── session.py            # Сессия БД
 │
-├── database/            # Работа с БД
-│   ├── __init__.py
-│   ├── models.py        # SQLAlchemy модели
-│   ├── database.py      # Подключение к БД
-│   └── crud.py          # CRUD операции
-│
-├── keyboards/           # Клавиатуры
-│   ├── __init__.py
-│   ├── inline.py        # Inline кнопки
-│   └── reply.py         # Reply кнопки
-│
-├── utils/               # Вспомогательные функции
-│   ├── __init__.py
-│   ├── states.py        # FSM состояния
-│   └── helpers.py       # Утилиты
-│
-├── middlewares/         # Middleware
-│   ├── __init__.py
-│   └── database.py      # DB middleware
-│
-└── migrations/          # Alembic миграции
-    └── versions/
+└── venv/                     # Виртуальное окружение
 ```
 
 ## 🗄️ Структура базы данных
