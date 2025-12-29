@@ -262,9 +262,9 @@ alembic==1.13.1
 ## 👨‍💻 Автор
 
 **Ваше Имя**
-- Telegram: [@yourusername](https://t.me/yourusername)
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+- Telegram: [@motivator6438](https://t.me/@motivator6438)
+- GitHub: [@Razrab-504]((https://github.com/Razrab-504))
+- Email: mammedovibrahim38@gmail.com
 
 ## 🌟 Поддержка
 
