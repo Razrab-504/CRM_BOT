@@ -20,47 +20,47 @@ employee_handlers_router.callback_query.filter(RoleFilter("employee"))
 def format_order_info(order, client=None) -> str:
     if client:
         client_info = f"{client.first_name} {client.last_name}"
-        client_phone = f"📞 <b>Телефон клиента:</b> {client.phone}\n"
+        client_phone = f"📞 <b>Client phone:</b> {client.phone}\n"
     else:
-        client_info = "Неизвестный клиент"
+        client_info = "Unknown client"
         client_phone = ""
     
     status_text = {
-        "PENDING": "⏳ Ожидает подтверждения",
-        "IN_PROGRESS": "✅ В работе",
-        "COMPLETED": "✅ Завершен",
-        "CANCELLED": "❌ Отменен"
+        "PENDING": "⏳ Waiting for confirmation",
+        "IN_PROGRESS": "✅ In progress",
+        "COMPLETED": "✅ Completed",
+        "CANCELLED": "❌ Cancelled"
     }
     status_display = status_text.get(order.status.value, order.status.value)
     
     return (
-        f"📋 <b>Заказ #{order.id}</b>\n\n"
-        f"👤 <b>Клиент:</b> {client_info}\n"
+        f"📋 <b>Order #{order.id}</b>\n\n"
+        f"👤 <b>Client:</b> {client_info}\n"
         f"{client_phone}"
-        f"📝 <b>Описание:</b> {order.description}\n"
-        f"💰 <b>Бюджет:</b> {order.price} USD\n"
-        f"📊 <b>Статус:</b> {status_display}\n"
-        f"📅 <b>Создан:</b> {order.created_at.strftime('%d.%m.%Y %H:%M')}"
+        f"📝 <b>Description:</b> {order.description}\n"
+        f"💰 <b>Budget:</b> {order.price} USD\n"
+        f"📊 <b>Status:</b> {status_display}\n"
+        f"📅 <b>Created:</b> {order.created_at.strftime('%d.%m.%Y %H:%M')}"
     )
 
 
-@employee_handlers_router.message(F.text == "📋 Мои заказы")
+@employee_handlers_router.message(F.text == "📋 My orders")
 async def show_employee_orders(message: Message):
     user_id = message.from_user.id
     
     async with Local_Session() as session:
         employee = await get_employee(session, user_id)
         if not employee:
-            await message.answer("Ошибка: исполнитель не найден.")
+            await message.answer("Error: freelancer not found.")
             return
-        
+
         orders = await get_orders_by_employee(session, employee.id)
-    
+
     if not orders:
-        await message.answer("У вас пока нет заказов.")
+        await message.answer("You have no orders yet.")
         return
-    
-    text = "📋 <b>Ваши заказы:</b>\n\nВыберите заказ для просмотра:"
+
+    text = "📋 <b>Your orders:</b>\n\nSelect an order to view:"
     keyboard = create_employee_orders_keyboard(orders)
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -69,11 +69,11 @@ async def show_employee_orders(message: Message):
 async def view_employee_order(callback: CallbackQuery):
     await callback.answer()
     order_id = int(callback.data.split(":")[1])
-    
+
     async with Local_Session() as session:
         order = await get_order_by_id(session, order_id)
         if not order:
-            await callback.message.answer("Заказ не найден.")
+            await callback.message.answer("Order not found.")
             return
         
         client = await get_client_by_id(session, order.client_id)
@@ -90,15 +90,15 @@ async def view_employee_order(callback: CallbackQuery):
 async def approve_order(callback: CallbackQuery):
     await callback.answer()
     order_id = int(callback.data.split(":")[1])
-    
+
     async with Local_Session() as session:
         order = await get_order_by_id(session, order_id)
         if not order:
-            await callback.message.answer("Заказ не найден.")
+            await callback.message.answer("Order not found.")
             return
-        
+
         if order.status != OrderStatusEnum.PENDING:
-            await callback.answer("Этот заказ уже обработан.", show_alert=True)
+            await callback.answer("This order has already been processed.", show_alert=True)
             return
         
         updated_order = await update_order_status(session, order_id, OrderStatusEnum.IN_PROGRESS)
@@ -106,11 +106,11 @@ async def approve_order(callback: CallbackQuery):
             client = await get_client_by_id(session, updated_order.client_id)
             order_text = format_order_info(updated_order, client)
             await callback.message.edit_text(
-                f"✅ <b>Заказ подтвержден!</b>\n\n{order_text}",
+                f"✅ <b>Order confirmed!</b>\n\n{order_text}",
                 parse_mode="HTML"
             )
         else:
-            await callback.message.answer("Ошибка при обновлении статуса заказа.")
+            await callback.message.answer("Error updating order status.")
 
 
 @employee_handlers_router.callback_query(F.data.startswith("order_cancel_emp:"))
@@ -121,11 +121,11 @@ async def cancel_order_by_employee(callback: CallbackQuery):
     async with Local_Session() as session:
         order = await get_order_by_id(session, order_id)
         if not order:
-            await callback.message.answer("Заказ не найден.")
+            await callback.message.answer("Order not found.")
             return
-        
+
         if order.status != OrderStatusEnum.PENDING:
-            await callback.answer("Этот заказ уже обработан.", show_alert=True)
+            await callback.answer("This order has already been processed.", show_alert=True)
             return
         
         updated_order = await update_order_status(session, order_id, OrderStatusEnum.CANCELLED)
@@ -133,38 +133,38 @@ async def cancel_order_by_employee(callback: CallbackQuery):
             client = await get_client_by_id(session, updated_order.client_id)
             order_text = format_order_info(updated_order, client)
             await callback.message.edit_text(
-                f"❌ <b>Заказ отменен</b>\n\n{order_text}",
+                f"❌ <b>Order cancelled</b>\n\n{order_text}",
                 parse_mode="HTML"
             )
         else:
-            await callback.message.answer("Ошибка при обновлении статуса заказа.")
+            await callback.message.answer("Error updating order status.")
 
 
-@employee_handlers_router.message(F.text == "👤 Профиль")
+@employee_handlers_router.message(F.text == "👤 Profile")
 async def show_employee_profile(message: Message):
     user_id = message.from_user.id
-    
+
     async with Local_Session() as session:
         employee = await get_employee(session, user_id)
         if not employee:
-            await message.answer("Ошибка: исполнитель не найден.")
+            await message.answer("Error: freelancer not found.")
             return
         
         reviews = await get_reviews_by_employee(session, employee.id)
         
         text = (
-            f"👤 <b>Ваш профиль:</b>\n\n"
-            f"📛 <b>Имя:</b> {employee.first_name} {employee.last_name}\n"
-            f"📞 <b>Телефон:</b> {employee.phone}\n"
-            f"🎂 <b>Дата рождения:</b> {employee.birth_date}\n"
-            f"💼 <b>Направление:</b> {employee.branch.value}\n"
-            f"⭐ <b>Рейтинг:</b> {employee.rating}\n"
-            f"📊 <b>Отзывов:</b> {employee.total_reviews}\n"
-            f"📅 <b>Дата регистрации:</b> {employee.created_at.strftime('%d.%m.%Y')}"
+            f"👤 <b>Your profile:</b>\n\n"
+            f"📛 <b>Name:</b> {employee.first_name} {employee.last_name}\n"
+            f"📞 <b>Phone:</b> {employee.phone}\n"
+            f"🎂 <b>Date of birth:</b> {employee.birth_date}\n"
+            f"💼 <b>Direction:</b> {employee.branch.value}\n"
+            f"⭐ <b>Rating:</b> {employee.rating}\n"
+            f"📊 <b>Reviews:</b> {employee.total_reviews}\n"
+            f"📅 <b>Registration date:</b> {employee.created_at.strftime('%d.%m.%Y')}"
         )
         
         if reviews:
-            text += "\n\n📝 <b>Последние отзывы:</b>\n"
+            text += "\n\n📝 <b>Latest reviews:</b>\n"
             for review in reviews[:5]:
                 stars = "⭐" * review.rating
                 text += f"\n{stars} ({review.rating}/5)\n"
@@ -172,19 +172,19 @@ async def show_employee_profile(message: Message):
                     text += f"{review.comment}\n"
                 text += f"📅 {review.created_at.strftime('%d.%m.%Y')}\n"
         else:
-            text += "\n\n📝 Отзывов пока нет."
+            text += "\n\n📝 No reviews yet."
     
     await message.answer(text, parse_mode="HTML")
 
 
-@employee_handlers_router.message(F.text == "📊 Статистика")
+@employee_handlers_router.message(F.text == "📊 Statistics")
 async def show_employee_statistics(message: Message):
     user_id = message.from_user.id
     
     async with Local_Session() as session:
         employee = await get_employee(session, user_id)
         if not employee:
-            await message.answer("Ошибка: исполнитель не найден.")
+            await message.answer("Error: freelancer not found.")
             return
         
         all_orders = await get_orders_by_employee(session, employee.id)
@@ -202,16 +202,16 @@ async def show_employee_statistics(message: Message):
         total_earned = sum(float(order.price) for order in completed_orders)
         
         text = (
-            f"📊 <b>Ваша статистика:</b>\n\n"
-            f"📋 <b>Всего заказов:</b> {total_orders}\n\n"
-            f"📊 <b>По статусам:</b>\n"
-            f"⏳ Ожидает подтверждения: {pending_count}\n"
-            f"✅ В работе: {in_progress_count}\n"
-            f"✅ Завершено: {completed_count}\n"
-            f"❌ Отменено: {cancelled_count}\n\n"
-            f"💰 <b>Заработано:</b> {total_earned:.2f} USD\n"
-            f"⭐ <b>Рейтинг:</b> {employee.rating}\n"
-            f"📝 <b>Отзывов:</b> {employee.total_reviews}"
+            f"📊 <b>Your statistics:</b>\n\n"
+            f"📋 <b>Total orders:</b> {total_orders}\n\n"
+            f"📊 <b>By status:</b>\n"
+            f"⏳ Waiting for confirmation: {pending_count}\n"
+            f"✅ In progress: {in_progress_count}\n"
+            f"✅ Completed: {completed_count}\n"
+            f"❌ Cancelled: {cancelled_count}\n\n"
+            f"💰 <b>Earned:</b> {total_earned:.2f} USD\n"
+            f"⭐ <b>Rating:</b> {employee.rating}\n"
+            f"📝 <b>Reviews:</b> {employee.total_reviews}"
         )
     
     await message.answer(text, parse_mode="HTML")

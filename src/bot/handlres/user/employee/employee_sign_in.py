@@ -30,21 +30,21 @@ class SignUpEmployee(StatesGroup):
 @employee_sign_in_router.message(SignUpEmployee.first_name)
 async def emp_first_name(message: Message, state: FSMContext):
     if not message.text:
-        await message.answer("Пожалуйста, введите корректное имя.")
+        await message.answer("Please enter a valid first name.")
         return
     await state.update_data(first_name=message.text.strip())
-    await message.answer("А теперь фамилию:")
+    await message.answer("Now enter your last name:")
     await state.set_state(SignUpEmployee.last_name)
 
 
 @employee_sign_in_router.message(SignUpEmployee.last_name)
 async def emp_last_name(message: Message, state: FSMContext):
     if not message.text:
-        await message.answer("Пожалуйста, введите корректную фамилию.")
+        await message.answer("Please enter a valid last name.")
         return
     await state.update_data(last_name=message.text.strip())
 
-    await message.answer("Отправьте контакт (или введите номер вручную):", reply_markup=contact_kbd)
+    await message.answer("Send contact (or enter the number manually):", reply_markup=contact_kbd)
     await state.set_state(SignUpEmployee.phone)
 
 
@@ -53,23 +53,23 @@ async def emp_phone(message: Message, state: FSMContext):
     phone = None
     if message.contact and message.contact.phone_number:
         phone = message.contact.phone_number
-    elif message.text and message.text.lower() == "отмена":
+    elif message.text and message.text.lower() == "cancel":
         await state.clear()
-        await message.answer("Регистрация отменена.", reply_markup=client_emp_kbd)
+        await message.answer("Registration cancelled.", reply_markup=client_emp_kbd)
         return
     elif message.text:
         txt = message.text.strip()
         if re.fullmatch(r"\+?\d{7,15}", txt):
             phone = txt
         else:
-            await message.answer("Неверный номер. Введите номер в формате +71234567890 или отправьте контакт.")
+            await message.answer("Invalid number. Enter the number in the format +71234567890 or send contact.")
             return
     else:
-        await message.answer("Пожалуйста, отправьте контакт или введите номер.")
+        await message.answer("Please send contact or enter the number.")
         return
 
     await state.update_data(phone=phone)
-    await message.answer("Введите дату рождения (ГГГГ-ММ-ДД или ДД.ММ.ГГГГ):", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Enter date of birth (YYYY-MM-DD or DD.MM.YYYY):", reply_markup=ReplyKeyboardRemove())
     await state.set_state(SignUpEmployee.birth_date)
 
 
@@ -83,13 +83,13 @@ async def emp_birth_date(message: Message, state: FSMContext):
         except Exception:
             bd = None
     if not bd:
-        await message.answer("Неверный формат даты. Попробуйте снова (ГГГГ-ММ-ДД или ДД.MM.ГГГГ).")
+        await message.answer("Invalid date format. Try again (YYYY-MM-DD or DD.MM.YYYY).")
         return
 
     await state.update_data(birth_date=bd)
 
 
-    await message.answer("Выберите направление/специализацию:", reply_markup=brunch_markup)
+    await message.answer("Choose direction/specialization:", reply_markup=brunch_markup)
     await state.set_state(SignUpEmployee.branch)
 
 
@@ -100,12 +100,12 @@ async def emp_choose_branch(call: CallbackQuery, state: FSMContext):
     await state.update_data(branch=branch_value)
 
     data = await state.get_data()
-    summary = (f"Пожалуйста, подтвердите данные:\n"
-               f"Имя: {data.get('first_name')}\n"
-               f"Фамилия: {data.get('last_name')}\n"
-               f"Телефон: {data.get('phone')}\n"
-               f"Дата рождения: {data.get('birth_date')}\n"
-               f"Направление: {branch_value}")
+    summary = (f"Please confirm the data:\n"
+               f"First name: {data.get('first_name')}\n"
+               f"Last name: {data.get('last_name')}\n"
+               f"Phone: {data.get('phone')}\n"
+               f"Date of birth: {data.get('birth_date')}\n"
+               f"Direction: {branch_value}")
 
     await call.message.answer(summary, reply_markup=kb)
     await state.set_state(SignUpEmployee.confirm)
@@ -133,7 +133,7 @@ async def emp_confirm_yes(call: CallbackQuery, state: FSMContext):
             branch=branch,
         )
 
-    await call.message.answer("Регистрация исполнителя успешна ✅")
+    await call.message.answer("Freelancer registration successful ✅")
     await state.clear()
 
 
@@ -141,4 +141,4 @@ async def emp_confirm_yes(call: CallbackQuery, state: FSMContext):
 async def emp_confirm_no(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.clear()
-    await call.message.answer("Регистрация отменена. Если хотите — начните заново.", reply_markup=client_emp_kbd)
+    await call.message.answer("Registration cancelled. If you want, start over.", reply_markup=client_emp_kbd)

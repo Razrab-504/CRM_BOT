@@ -21,26 +21,26 @@ async def start_cmd(message: Message):
 
     if client or employee:
         if client:
-            await message.answer(f"Привет <b>клиент</b> {message.from_user.full_name}. Выбирите одну из следующих кнопок", 
+            await message.answer(f"Hello <b>client</b> {message.from_user.full_name}. Choose one of the following buttons",
                                  reply_markup=clients_buttons, parse_mode="HTML")
         elif employee:
-            await message.answer(f"Привет <b>исполнитель</b> {message.from_user.full_name}. Выбирите одну из следующих кнопок", 
+            await message.answer(f"Hello <b>freelancer</b> {message.from_user.full_name}. Choose one of the following buttons",
                                  reply_markup=employee_main_btn, parse_mode="HTML")
     else:
-        await message.answer("Добро пожаловать. Пройдите пожалуйста регистрацию", reply_markup=client_emp_kbd)
+        await message.answer("Welcome. Please complete the registration", reply_markup=client_emp_kbd)
         
 
-@user_router.message(F.text=="Я клиент 👨🏻‍💼")
+@user_router.message(F.text=="I am a client 👨🏻‍💼")
 async def client_cmd(message: Message, state: FSMContext):
     await state.update_data(role="client")
-    await message.answer("Напишите свое имя:", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Enter your first name:", reply_markup=ReplyKeyboardRemove())
     from src.bot.handlres.user.clients.clients_sign_in import SignUpClient
     await state.set_state(SignUpClient.first_name)
 
 
-@user_router.message(F.text=="Я исполнитель 👨🏻‍💻")
+@user_router.message(F.text=="I am a freelancer 👨🏻‍💻")
 async def employee_cmd(message: Message, state: FSMContext):
     await state.update_data(role="employee")
-    await message.answer("Напишите свое имя:", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Enter your first name:", reply_markup=ReplyKeyboardRemove())
     from src.bot.handlres.user.employee.employee_sign_in import SignUpEmployee
     await state.set_state(SignUpEmployee.first_name)
